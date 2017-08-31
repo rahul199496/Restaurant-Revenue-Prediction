@@ -1,0 +1,33 @@
+
+library(ggplot2)
+library(readr)
+library(Rtsne)
+
+set.seed(1)
+
+train <- read_csv("../input/train.csv")
+numeric_features <- train[,c(-1,-2,-3,-4,-5,-43)]
+
+tsne <- Rtsne(as.matrix(numeric_features), check_duplicates = FALSE, pca = TRUE, 
+              perplexity=30, theta=0.5, dims=2)
+
+embedding <- as.data.frame(tsne$Y)
+embedding$Revenue  <- train$revenue/1e6
+embedding$Type     <- train$Type
+embedding$CityType <- train[["City Group"]]
+
+p <- ggplot(embedding, aes(x=V1, y=V2, color=Revenue, shape=CityType)) +
+     geom_point(size=4) +
+     scale_colour_gradientn(colours=c("#3288bd","#66c2a5","#abdda4","#e6f598","#fee08b","#fdae61","#f46d43","#d53e4f"), name="Revenue ($M)") + 
+     xlab("") + ylab("") +
+     theme_light(base_size=20) +
+     ggtitle("t-SNE Restaurant Visualization") + 
+     theme(strip.background = element_blank(),
+           strip.text.x     = element_blank(),
+           axis.text.x      = element_blank(),
+           axis.text.y      = element_blank(),
+           axis.ticks       = element_blank(),
+           axis.line        = element_blank(),
+           panel.border     = element_blank())
+
+ggsave("tsne.png", p, height=8, width=8, units="in")
